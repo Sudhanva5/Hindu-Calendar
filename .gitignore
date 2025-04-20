@@ -5,7 +5,7 @@
 ## User settings
 xcuserdata/
 
-## Xcode 8 and earlier
+## compatibility with Xcode 8 and earlier (ignoring not required starting Xcode 9)
 *.xcscmblueprint
 *.xccheckout
 
@@ -42,9 +42,9 @@ playground.xcworkspace
 # Package.resolved
 # *.xcodeproj
 #
-# Xcode automatically generates this directory with a .xcworkspacedata file and xcuserdata
+# Xcode automatically generates this directory with a .xcworkspace file and xcuserdata
 # hence it is not needed unless you have added a package configuration file to your project
-.swiftpm
+# .swiftpm
 
 .build/
 
@@ -89,39 +89,13 @@ fastlane/test_output
 
 iOSInjectionProject/
 
-# Mac OS specific
+# macOS
 .DS_Store
 .AppleDouble
 .LSOverride
-
-# Thumbnails
-._*
 
 # Python
 __pycache__/
 *.py[cod]
 *$py.class
-*.so
-.Python
-env/
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-.env
-venv/
-venv310/
-.venv
-.idea/
-.vscode/ 
+venv/ 
