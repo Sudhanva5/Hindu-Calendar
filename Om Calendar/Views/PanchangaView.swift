@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct PanchangaView: View {
-    @StateObject private var viewModel = PanchangaViewModel()
+    @EnvironmentObject private var viewModel: PanchangaViewModel
     @State private var selectedDate = Date()
     @State private var showDatePicker = false
     

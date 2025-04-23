@@ -135,9 +135,20 @@ struct RemindersView: View {
             Toggle(isOn: $amavasyaNotifications) {
                 Text("Amavasya Notifications")
             }
-            .onChange(of: amavasyaNotifications) { _ in
-                Task {
-                    await NotificationManager.shared.scheduleNotifications()
+            .onChange(of: amavasyaNotifications) { newValue in
+                if newValue {
+                    Task {
+                        let granted = await NotificationManager.shared.requestAuthorization()
+                        if !granted {
+                            amavasyaNotifications = false
+                        } else {
+                            await NotificationManager.shared.scheduleNotifications()
+                        }
+                    }
+                } else {
+                    Task {
+                        await NotificationManager.shared.scheduleNotifications()
+                    }
                 }
             }
             
@@ -145,9 +156,20 @@ struct RemindersView: View {
             Toggle(isOn: $ekadashiNotifications) {
                 Text("Ekadashi Notifications")
             }
-            .onChange(of: ekadashiNotifications) { _ in
-                Task {
-                    await NotificationManager.shared.scheduleNotifications()
+            .onChange(of: ekadashiNotifications) { newValue in
+                if newValue {
+                    Task {
+                        let granted = await NotificationManager.shared.requestAuthorization()
+                        if !granted {
+                            ekadashiNotifications = false
+                        } else {
+                            await NotificationManager.shared.scheduleNotifications()
+                        }
+                    }
+                } else {
+                    Task {
+                        await NotificationManager.shared.scheduleNotifications()
+                    }
                 }
             }
             
@@ -155,9 +177,20 @@ struct RemindersView: View {
             Toggle(isOn: $purnimaNotifications) {
                 Text("Purnima Notifications")
             }
-            .onChange(of: purnimaNotifications) { _ in
-                Task {
-                    await NotificationManager.shared.scheduleNotifications()
+            .onChange(of: purnimaNotifications) { newValue in
+                if newValue {
+                    Task {
+                        let granted = await NotificationManager.shared.requestAuthorization()
+                        if !granted {
+                            purnimaNotifications = false
+                        } else {
+                            await NotificationManager.shared.scheduleNotifications()
+                        }
+                    }
+                } else {
+                    Task {
+                        await NotificationManager.shared.scheduleNotifications()
+                    }
                 }
             }
             
