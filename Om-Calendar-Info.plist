@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>NSRemoteNotificationUsageDescription</key>
+	<string>We need permission to send you reminders for important Panchanga events and daily updates.</string>
+	<key>NSUserNotificationsUsageDescription</key>
+	<string>We need permission to send you reminders for important Panchanga events and daily updates.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+		<string>remote-notification</string>
+		<string>remote-notification</string>
+		<string>fetch</string>
+	</array>
+	<key>UILaunchScreen</key>
+	<false/>
+</dict>
+</plist>

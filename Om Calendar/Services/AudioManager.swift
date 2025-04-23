@@ -28,7 +28,12 @@ class AudioManager: NSObject {
             do {
                 audioPlayer = try AVAudioPlayer(contentsOf: url)
                 audioPlayer?.numberOfLoops = -1 // Loop indefinitely
-                audioPlayer?.volume = 0.5 // Start at 50% volume
+                
+                // Get stored volume from UserDefaults or use default
+                let storedVolume = UserDefaults.standard.float(forKey: "omChantVolume")
+                let initialVolume = storedVolume > 0 ? storedVolume : 0.5
+                audioPlayer?.volume = initialVolume
+                
                 audioPlayer?.prepareToPlay() // Pre-load the audio
                 audioPlayer?.play()
                 isPlaying = true
@@ -51,6 +56,10 @@ class AudioManager: NSObject {
         // Ensure volume is between 0 and 1
         let clampedVolume = max(0, min(volume, 1))
         audioPlayer?.volume = clampedVolume
+        
+        // Store volume in UserDefaults
+        UserDefaults.standard.set(clampedVolume, forKey: "omChantVolume")
+        UserDefaults.standard.synchronize()
     }
     
     func fadeOut(duration: TimeInterval = 2.0) {

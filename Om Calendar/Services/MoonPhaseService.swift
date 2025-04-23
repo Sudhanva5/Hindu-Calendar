@@ -106,6 +106,7 @@ struct MoonPhaseView: View {
                 Circle()
                     .frame(width: 200, height: 200)
                     .shimmer()
+                    .transition(.opacity)
             } else {
                 Group {
                     if let image = moonImage {
@@ -117,9 +118,9 @@ struct MoonPhaseView: View {
                             .shadow(color: .white.opacity(0.08), radius: 8)  // Inner glow
                             .shadow(color: .white.opacity(0.05), radius: 15) // Outer glow
                             .opacity(opacity)
-                            .onAppear {
-                                withAnimation(.easeIn(duration: 0.5)) {
-                                    opacity = 1.0
+                            .onChange(of: date) { _ in
+                                withAnimation(.easeOut(duration: 0.3)) {
+                                    opacity = 0.0
                                 }
                             }
                     } else if isLoading {
@@ -127,6 +128,7 @@ struct MoonPhaseView: View {
                         Circle()
                             .frame(width: 200, height: 200)
                             .shimmer()
+                            .transition(.opacity)
                     } else if hasError {
                         VStack {
                             Image(systemName: "moon.circle.fill")
@@ -140,6 +142,7 @@ struct MoonPhaseView: View {
                                 .font(.caption)
                                 .padding(.top, 8)
                         }
+                        .transition(.opacity)
                     }
                 }
             }
@@ -151,6 +154,9 @@ struct MoonPhaseView: View {
                 isLoading = true
                 moonImage = await MoonPhaseService.getMoonPhase(for: date, tithi: viewModel.panchanga?.tithi)
                 isLoading = false
+                withAnimation(.easeIn(duration: 0.8)) {
+                    opacity = 1.0
+                }
             }
         }
         .task {
@@ -159,6 +165,9 @@ struct MoonPhaseView: View {
                 isLoading = true
                 moonImage = await MoonPhaseService.getMoonPhase(for: date, tithi: viewModel.panchanga?.tithi)
                 isLoading = false
+                withAnimation(.easeIn(duration: 0.8)) {
+                    opacity = 1.0
+                }
             } catch {
                 print("Failed to load moon phase: \(error.localizedDescription)")
                 hasError = true

@@ -1,64 +1,98 @@
 import SwiftUI
 import CoreLocation
+import os
+import Combine
 
-class PanchangaViewModel: NSObject, ObservableObject, CLLocationManagerDelegate {
+class PanchangaViewModel: ObservableObject {
+    // MARK: - Published Properties
     @Published var panchanga: Panchanga?
     @Published var errorMessage: String?
     @Published var isLoading: Bool = false
     
-    private let locationManager = CLLocationManager()
-    private var defaultLocation = CLLocation(latitude: 12.9716, longitude: 77.5946) // Bangalore
+    // MARK: - Private Properties
+    private let locationService = LocationService.shared
+    private let logger = Logger(subsystem: "com.omcalendar", category: "Panchanga")
+    private var lastCalculatedLocation: CLLocation?
+    private var lastCalculatedDate: Date?
     
-    override init() {
-        super.init()
-        locationManager.delegate = self
+    // Minimum distance (in meters) required for recalculation
+    private let significantDistanceThreshold: CLLocationDistance = 100000 // 100 km
+    
+    init() {
+        setupLocationObserver()
     }
     
+    private func setupLocationObserver() {
+        // Observe location updates
+        locationService.$location
+            .receive(on: RunLoop.main)
+            .sink { [weak self] location in
+                guard let self = self,
+                      let newLocation = location else { return }
+                
+                // Check if we should recalculate based on distance
+                if let lastLocation = self.lastCalculatedLocation {
+                    let distance = newLocation.distance(from: lastLocation)
+                    if distance < self.significantDistanceThreshold {
+                        self.logger.info("Location change (\(distance)m) below threshold, skipping recalculation")
+                        return
+                    }
+                }
+                
+                self.logger.info("Significant location change detected: \(newLocation.coordinate.latitude), \(newLocation.coordinate.longitude)")
+                Task { @MainActor in
+                    await self.calculatePanchanga(for: Date())
+                }
+            }
+            .store(in: &cancellables)
+        
+        // Initial calculation if location is available
+        if let location = locationService.location {
+            self.logger.info("Initial location available: \(location.coordinate.latitude), \(location.coordinate.longitude)")
+            Task { @MainActor in
+                await calculatePanchanga(for: Date())
+            }
+        }
+    }
+    
+    // MARK: - Panchanga Calculation
     @MainActor
     func calculatePanchanga(for date: Date) async {
+        guard let location = locationService.location else {
+            logger.info("No location available, skipping panchanga calculation")
+            return
+        }
+        
+        // Check if we need to recalculate based on date
+        if let lastDate = lastCalculatedDate,
+           let lastLocation = lastCalculatedLocation {
+            let calendar = Calendar.current
+            if calendar.isDate(date, inSameDayAs: lastDate) {
+                logger.info("Same day, skipping recalculation")
+                return
+            }
+        }
+        
+        logger.info("Calculating panchanga for location: \(location.coordinate.latitude), \(location.coordinate.longitude)")
         isLoading = true
-        panchanga = nil
-        errorMessage = nil
+        errorMessage = nil // Clear any previous errors
         
         do {
-            // Use default location to avoid location errors
-            panchanga = try await PanchangaService.getPanchanga(for: date, location: defaultLocation)
+            let newPanchanga = try await PanchangaService.getPanchanga(for: date, location: location)
+            lastCalculatedLocation = location
+            lastCalculatedDate = date
+            panchanga = newPanchanga // This should trigger UI update
+            logger.info("Successfully calculated panchanga")
+            errorMessage = nil
         } catch {
-            print("Error calculating panchanga: \(error.localizedDescription)")
+            logger.error("Failed to calculate panchanga: \(error.localizedDescription)")
             errorMessage = "Failed to calculate panchanga: \(error.localizedDescription)"
+            panchanga = nil // Clear any previous panchanga data
         }
         
         isLoading = false
     }
     
-    // MARK: - CLLocationManagerDelegate
-    
-    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        switch manager.authorizationStatus {
-        case .authorizedWhenInUse, .authorizedAlways:
-            manager.requestLocation()
-        case .denied, .restricted:
-            print("Location access denied")
-            // Use default location
-            Task {
-                await calculatePanchanga(for: Date())
-            }
-        case .notDetermined:
-            manager.requestWhenInUseAuthorization()
-        @unknown default:
-            break
-        }
-    }
-    
-    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        // We're using default location, so no need to do anything here
-    }
-    
-    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        print("Location error: \(error.localizedDescription)")
-        // Use default location
-        Task {
-            await calculatePanchanga(for: Date())
-        }
-    }
-} 
+    // MARK: - Cancellables
+    private var cancellables = Set<AnyCancellable>()
+}
